@@ -6,13 +6,13 @@ const isEmailConfigured = () => {
 };
 
 // Create transporter using Gmail SMTP
-const createTransporter = () => {
+const createTransport = () => {
   if (!isEmailConfigured()) {
     console.warn('⚠️ Email credentials not configured. Emails will not be sent.');
     return null;
   }
 
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
@@ -34,7 +34,7 @@ const sendVerificationEmail = async (email, name, otp) => {
     return;
   }
 
-  const transporter = createTransporter();
+  const transporter = createTransport();
 
   const mailOptions = {
     from: `"OpenChatX" <${process.env.EMAIL_USER}>`,
@@ -94,7 +94,7 @@ const sendWelcomeEmail = async (email, name) => {
     return;
   }
 
-  const transporter = createTransporter();
+  const transporter = createTransport();
 
   const frontend = process.env.FRONTEND_URL || "https://openchatx.vercel.app";
 
@@ -158,7 +158,7 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
     return;
   }
 
-  const transporter = createTransporter();
+  const transporter = createTransport();
 
   const mailOptions = {
     from: `"OpenChatX" <${process.env.EMAIL_USER}>`,
