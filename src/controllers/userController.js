@@ -1,6 +1,6 @@
 const User = require('../models/userModel');
 const generateToken = require('../utils/generateToken');
-const { sendVerificationEmail } = require('../utils/emailService');
+const { sendVerificationEmail, sendWelcomeEmail } = require('../utils/emailService');
 
 // @desc    Register a new user
 // @route   POST /api/users
@@ -75,6 +75,14 @@ const verifyOTP = async (req, res) => {
     user.verificationOTP = undefined;
     user.otpExpires = undefined;
     await user.save();
+
+    // Send welcome email
+    try {
+        await sendWelcomeEmail(email, user.name);
+    } catch (error) {
+        console.error('Welcome email failed:', error);
+        // Continue even if welcome email fails
+    }
 
     res.json({
         _id: user._id,
