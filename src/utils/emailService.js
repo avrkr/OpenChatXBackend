@@ -12,13 +12,16 @@ const createTransporter = () => {
     return null;
   }
 
-  return nodemailer.createTransport({
+  return nodemailer.createTransporter({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-    tls: { rejectUnauthorized: false }
+    tls: { rejectUnauthorized: false },
+    connectionTimeout: 5000, // 5 seconds timeout
+    greetingTimeout: 5000,
+    socketTimeout: 5000
   });
 };
 
@@ -51,7 +54,7 @@ const sendVerificationEmail = async (email, name, otp) => {
             <p style="color:#777;">Valid for 10 minutes</p>
           </div>
 
-          <p>If you didn’t request this email, you can safely ignore it.</p>
+          <p>If you didn't request this email, you can safely ignore it.</p>
           <p style="color:#aaa; font-size:12px; text-align:center; margin-top:30px;">
             © ${new Date().getFullYear()} OpenChatX
           </p>
@@ -76,8 +79,9 @@ If you didn't create an account, ignore this message.
     await transporter.sendMail(mailOptions);
     console.log('✅ Verification email sent to:', email);
   } catch (err) {
-    console.error('❌ Error sending verification email:', err);
-    throw new Error('Failed to send verification email');
+    console.error('❌ Error sending verification email:', err.message);
+    // Don't throw - allow registration to continue even if email fails
+    console.log('⚠️ Registration will continue without email. OTP:', otp);
   }
 };
 
@@ -181,7 +185,7 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
             </a>
           </div>
 
-          <p>If the button doesn’t work, copy this link:</p>
+          <p>If the button doesn't work, copy this link:</p>
           <p style="word-break:break-all; color:#555;">${resetUrl}</p>
 
           <p>⏰ This link expires in 1 hour.</p>
