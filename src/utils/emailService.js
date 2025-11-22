@@ -504,149 +504,167 @@ The OpenChatX Team
   } catch (error) {
     console.error('❌ Error sending welcome email:', error);
     // Don't throw error for welcome email, it's not critical
-    <html>
-      <head>
-        <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              * {margin: 0; padding: 0; box-sizing: border-box; }
-              body {
-                font - family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              padding: 40px 20px;
-          }
-              .container {
-                max - width: 600px;
-              margin: 0 auto;
-              background: #ffffff;
-              border-radius: 16px;
-              overflow: hidden;
-              box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-          }
-              .header {
-                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-              padding: 40px 30px;
-              text-align: center;
-          }
-              .header h1 {
-                color: #ffffff;
-              font-size: 32px;
-              font-weight: 700;
-              margin-bottom: 10px;
-          }
-              .content {
-                padding: 40px 30px;
-          }
-              .message {
-                font - size: 16px;
-              color: #666;
-              line-height: 1.6;
-              margin-bottom: 30px;
-          }
-              .reset-button {
-                display: inline-block;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: #ffffff;
-              padding: 16px 40px;
-              border-radius: 50px;
-              text-decoration: none;
-              font-weight: 600;
-              font-size: 16px;
-              margin: 20px 0;
-              box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-          }
-              .link-box {
-                background: #f8f9fa;
-              padding: 15px;
-              border-radius: 8px;
-              word-break: break-all;
-              margin: 20px 0;
-              border: 1px solid #dee2e6;
-          }
-              .warning {
-                background: #fff3cd;
-              border-left: 4px solid #ffc107;
-              padding: 15px;
-              margin: 20px 0;
-              border-radius: 4px;
-          }
-              .footer {
-                background: #f8f9fa;
-              padding: 30px;
-              text-align: center;
-              border-top: 1px solid #e9ecef;
-          }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>🔒 Password Reset</h1>
-              </div>
-
-              <div class="content">
-                <p class="message">Hi <strong>${name}</strong>,</p>
-
-                <p class="message">
-                  We received a request to reset your password for your OpenChatX account.
-                  Click the button below to create a new password:
-                </p>
-
-                <div style="text-align: center;">
-                  <a href="${resetUrl}" class="reset-button">Reset Password</a>
-                </div>
-
-                <p class="message">Or copy and paste this link into your browser:</p>
-
-                <div class="link-box">
-                  <a href="${resetUrl}" style="color: #667eea;">${resetUrl}</a>
-                </div>
-
-                <p class="message">⏰ This link will expire in <strong>1 hour</strong> for security reasons.</p>
-
-                <div class="warning">
-                  <p style="color: #856404; margin: 0;">
-                    <strong>⚠️ Didn't request this?</strong><br>
-                      If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
-                  </p>
-                </div>
-              </div>
-
-              <div class="footer">
-                <p style="color: #6c757d; font-size: 14px;">
-                  © ${new Date().getFullYear()} OpenChatX. All rights reserved.
-                </p>
-              </div>
-            </div>
-          </body>
-        </html>
-        `,
-        text: `
-        Hi ${name},
-
-        We received a request to reset your password for your OpenChatX account.
-
-        Click the link below to reset your password:
-        ${resetUrl}
-
-        This link will expire in 1 hour for security reasons.
-
-        If you didn't request a password reset, please ignore this email.
-
-        Best regards,
-        The OpenChatX Team
-
-        © ${new Date().getFullYear()} OpenChatX. All rights reserved.
-        `,
-  };
-
-        try {
-          await transporter.sendMail(mailOptions);
-        console.log('✅ Password reset email sent to:', email);
-  } catch (error) {
-          console.error('❌ Error sending password reset email:', error);
-        throw new Error('Failed to send password reset email');
   }
 };
 
-        module.exports = {sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail};
+// Send password reset email
+const sendPasswordResetEmail = async (email, name, resetUrl) => {
+  if (!isEmailConfigured()) {
+    console.log('📧 Email not configured. Password reset email skipped for', email);
+    return;
+  }
+
+  const transporter = createTransporter();
+
+  const mailOptions = {
+    from: `"OpenChatX" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: '🔒 Reset Your Password - OpenChatX',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          }
+          .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .header h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .message {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+          }
+          .reset-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 16px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+          }
+          .link-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+          }
+          .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+          }
+          .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔒 Password Reset</h1>
+          </div>
+
+          <div class="content">
+            <p class="message">Hi <strong>${name}</strong>,</p>
+
+            <p class="message">
+              We received a request to reset your password for your OpenChatX account.
+              Click the button below to create a new password:
+            </p>
+
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="reset-button">Reset Password</a>
+            </div>
+
+            <p class="message">Or copy and paste this link into your browser:</p>
+
+            <div class="link-box">
+              <a href="${resetUrl}" style="color: #667eea;">${resetUrl}</a>
+            </div>
+
+            <p class="message">⏰ This link will expire in <strong>1 hour</strong> for security reasons.</p>
+
+            <div class="warning">
+              <p style="color: #856404; margin: 0;">
+                <strong>⚠️ Didn't request this?</strong><br>
+                If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
+              </p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p style="color: #6c757d; font-size: 14px;">
+              © ${new Date().getFullYear()} OpenChatX. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+Hi ${name},
+
+We received a request to reset your password for your OpenChatX account.
+
+Click the link below to reset your password:
+${resetUrl}
+
+This link will expire in 1 hour for security reasons.
+
+If you didn't request a password reset, please ignore this email.
+
+Best regards,
+The OpenChatX Team
+
+© ${new Date().getFullYear()} OpenChatX. All rights reserved.
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Password reset email sent to:', email);
+  } catch (error) {
+    console.error('❌ Error sending password reset email:', error);
+    throw new Error('Failed to send password reset email');
+  }
+};
+
+module.exports = { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail };
