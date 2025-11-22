@@ -17,6 +17,8 @@ const userSchema = mongoose.Schema(
         blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         avatar: { type: String, default: '' },
         status: { type: String, enum: ['online', 'offline', 'busy'], default: 'offline' },
+        verificationOTP: { type: String },
+        otpExpires: { type: Date },
     },
     { timestamps: true }
 );

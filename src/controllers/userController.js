@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
 const generateToken = require('../utils/generateToken');
+const { sendVerificationEmail } = require('../utils/emailService');
 
 // @desc    Register a new user
 // @route   POST /api/users
@@ -13,22 +14,76 @@ const registerUser = async (req, res) => {
         return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
     const user = await User.create({
         name,
         email,
         password,
+        verificationOTP: otp,
+        otpExpires: otpExpires,
     });
 
     if (user) {
+        // Send verification email
+        try {
+            await sendVerificationEmail(email, name, otp);
+        } catch (error) {
+            console.error('Email sending failed:', error);
+            // Continue even if email fails
+        }
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            token: generateToken(user._id),
+            isVerified: user.isVerified,
+            message: 'Registration successful. Please check your email for OTP verification.',
         });
     } else {
         res.status(400).json({ message: 'Invalid user data' });
     }
+};
+
+// @desc    Verify OTP
+// @route   POST /api/users/verify-otp
+// @access  Public
+const verifyOTP = async (req, res) => {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.isVerified) {
+        return res.status(400).json({ message: 'User already verified' });
+    }
+
+    if (user.verificationOTP !== otp) {
+        return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    if (user.otpExpires < new Date()) {
+        return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    user.isVerified = true;
+    user.verificationOTP = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+        token: generateToken(user._id),
+        message: 'Email verified successfully',
+    });
 };
 
 // @desc    Auth user & get token
@@ -40,6 +95,10 @@ const authUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
+        if (!user.isVerified) {
+            return res.status(401).json({ message: 'Please verify your email first' });
+        }
+
         res.json({
             _id: user._id,
             name: user.name,
@@ -116,7 +175,7 @@ const sendFriendRequest = async (req, res) => {
         return res.status(400).json({ message: 'Friend request already sent' });
     }
 
-    // Check if they sent you a request (if so, auto-accept? For now, just error)
+    // Check if they sent you a request
     const receivedRequest = currentUser.friendRequests.find(
         (r) => r.from.toString() === userId && r.status === 'pending'
     );
@@ -135,7 +194,7 @@ const sendFriendRequest = async (req, res) => {
 // @route   PUT /api/users/friend-request
 // @access  Private
 const respondToFriendRequest = async (req, res) => {
-    const { requestId, action } = req.body; // action: 'accept' or 'reject'
+    const { requestId, action } = req.body;
 
     const user = await User.findById(req.user._id);
     const request = user.friendRequests.find((r) => r._id.toString() === requestId);
@@ -145,13 +204,11 @@ const respondToFriendRequest = async (req, res) => {
     }
 
     if (action === 'accept') {
-        // Add to friends list for both
         user.friends.push(request.from);
         const sender = await User.findById(request.from);
         sender.friends.push(user._id);
         await sender.save();
 
-        // Remove from requests
         user.friendRequests = user.friendRequests.filter((r) => r._id.toString() !== requestId);
         await user.save();
         res.json({ message: 'Friend request accepted' });
@@ -180,6 +237,7 @@ const getFriends = async (req, res) => {
 
 module.exports = {
     registerUser,
+    verifyOTP,
     authUser,
     getUserProfile,
     searchUsers,
