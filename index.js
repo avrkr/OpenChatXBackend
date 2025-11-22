@@ -1,23 +1,35 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const connectDB = require('./src/config/db');
+const userRoutes = require('./src/routes/userRoutes');
+const { initSocket } = require('./src/socket');
 
 dotenv.config();
+connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Routes
+app.use('/api/users', userRoutes);
+app.use('/api/chats', require('./src/routes/chatRoutes'));
+app.use('/api/messages', require('./src/routes/messageRoutes'));
+
 app.get('/', (req, res) => {
-  res.send('Hello from Backend!');
+    res.send('OpenChatX Backend Running');
 });
 
-app.get('/api/data', (req, res) => {
-  res.json({ message: 'This is data from the backend', timestamp: new Date() });
-});
+// Socket.IO
+initSocket(server);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
