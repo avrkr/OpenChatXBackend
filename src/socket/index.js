@@ -5,7 +5,7 @@ let io;
 const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: '*', // Allow all for dev, change to specific origin for prod
+            origin: ['http://localhost:5173', 'https://openchatx.vercel.app'],
             methods: ['GET', 'POST'],
         },
     });
